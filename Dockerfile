@@ -5,7 +5,7 @@ RUN gradle --version && java -version
 WORKDIR /app
 
 # Only copy dependency-related files
-COPY build.gradle gradle.properties settings.gradle /app/
+COPY build.gradle settings.gradle /app/
 
 # Only download dependencies
 # Eat the expected build failure since no source code has been copied yet
