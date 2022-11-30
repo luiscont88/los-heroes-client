@@ -1,14 +1,20 @@
-FROM gradle:7.6.0-jdk8 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-RUN gradle build
+FROM gradle:7.6.0-jdk8
 
-FROM openjdk:8-jre-slim
+RUN gradle --version && java -version
 
-EXPOSE 8080
+WORKDIR /app
 
-RUN mkdir /app
+# Only copy dependency-related files
+COPY build.gradle gradle.properties settings.gradle /app/
 
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/spring-boot-application.jar
+# Only download dependencies
+# Eat the expected build failure since no source code has been copied yet
+RUN gradle clean build --no-daemon > /dev/null 2>&1 || true
 
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
+# Copy all files
+COPY ./ /app/
+
+# Do the actual build
+RUN gradle clean build --no-daemon
+
+CMD java -jar build/libs/*.jar
